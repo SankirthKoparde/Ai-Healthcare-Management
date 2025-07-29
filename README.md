@@ -1,4 +1,4 @@
-# eDoc Healthcare System
+# Ai-Healthcare-Management 
 
 A web-based healthcare channeling and AI insights platform.
 

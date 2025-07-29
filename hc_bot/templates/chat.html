@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Healthcare Chatbot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+            min-height: 100vh;
+        }
+        .chat-container {
+            max-width: 500px;
+            width: 100%;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 32px rgba(0,0,0,0.13);
+            display: flex;
+            flex-direction: column;
+            min-height: 80vh;
+            height: 80vh;
+            overflow: hidden;
+        }
+        .chat-header {
+            background: #0074d9;
+            color: #fff;
+            padding: 20px 24px 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .chat-header h3 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.35rem;
+            letter-spacing: 1px;
+        }
+        .chat-header .btn-group {
+            gap: 8px;
+        }
+        .chat-footer {
+            background: #f8fafc;
+            padding: 10px 24px;
+            border-top: 1px solid #eaeaea;
+            text-align: center;
+            font-size: 0.95em;
+            color: #888;
+        }
+        #conversation {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 18px 8px 18px;
+            display: flex;
+            flex-direction: column;
+            background: #f7fbff;
+            /* Modern custom scrollbar */
+            scrollbar-width: thin;
+            scrollbar-color: #0074d9 #e7f3ff;
+            max-height: 100%;
+        }
+        #conversation::-webkit-scrollbar {
+            width: 8px;
+        }
+        #conversation::-webkit-scrollbar-thumb {
+            background: #0074d9;
+            border-radius: 6px;
+        }
+        #conversation::-webkit-scrollbar-track {
+            background: #e7f3ff;
+            border-radius: 6px;
+        }
+        .bubble {
+            max-width: 80%;
+            padding: 12px 18px;
+            margin-bottom: 10px;
+            border-radius: 18px;
+            font-size: 1em;
+            line-height: 1.5;
+            word-break: break-word;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            position: relative;
+        }
+        .bot {
+            align-self: flex-start;
+            background: #e7f3ff;
+            color: #0074d9;
+            border-bottom-left-radius: 4px;
+        }
+        .user {
+            align-self: flex-end;
+            background: #0074d9;
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+            padding: 18px 24px;
+            background: #fff;
+            border-top: 1px solid #eaeaea;
+        }
+        #input {
+            flex: 1;
+            padding: 10px 16px;
+            border: 1px solid #d0d7de;
+            border-radius: 20px;
+            font-size: 1em;
+            outline: none;
+            background: #f9fbfc;
+            transition: border 0.2s;
+        }
+        #input:focus {
+            border-color: #0074d9;
+        }
+        #send-btn {
+            background: #0074d9;
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 22px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #send-btn:active, #send-btn:focus {
+            background: #005fa3;
+            outline: none;
+        }
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0 0 0;
+            flex-wrap: wrap;
+        }
+        .quick-actions .btn {
+            font-size: 0.95em;
+            border-radius: 18px;
+            padding: 6px 16px;
+        }
+        .bot-loader {
+            display: inline-block;
+            width: 28px;
+            height: 18px;
+            vertical-align: middle;
+        }
+        .bot-loader span {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            margin: 0 1px;
+            background: #0074d9;
+            border-radius: 50%;
+            animation: bounce 1.2s infinite both;
+        }
+        .bot-loader span:nth-child(2) { animation-delay: 0.2s; }
+        .bot-loader span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0.8); }
+            40% { transform: scale(1.2); }
+        }
+        @media (max-width: 600px) {
+            .chat-container {
+                max-width: 100vw;
+                min-height: 100vh;
+                height: 100vh;
+                margin: 0;
+                border-radius: 0;
+                box-shadow: none;
+            }
+            .chat-header, .chat-input-area, .chat-footer {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            #conversation {
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="chat-container shadow-lg">
+    <div class="chat-header">
+        <h3>
+            <img src="https://img.icons8.com/color/36/000000/doctor-male.png" style="width:32px;margin-right:8px;vertical-align:middle;">
+            Healthcare Chatbot
+        </h3>
+        <div class="btn-group">
+            <a href="http://localhost/skeey_hc/patient/index.php" class="btn btn-outline-light btn-sm" title="Back to Home">
+                <i class="bi bi-house"></i> Home
+            </a>
+            <a href="http://localhost/skeey_hc/patient/schedule.php" class="btn btn-light btn-sm" title="Book a Doctor">
+                <i class="bi bi-calendar2-check"></i> Book a Doctor
+            </a>
+        </div>
+    </div>
+    <div id="conversation">
+        <div class="bubble bot">👋 <b>Welcome to Healthcare Chatbot!</b></div>
+        <div class="bubble bot">What is your name?</div>
+        <div class="quick-actions">
+            <a href="http://localhost/skeey_hc/patient/index.php" class="btn btn-outline-primary btn-sm">🏠 Back to Home</a>
+            <a href="http://localhost/skeey_hc/patient/schedule.php" class="btn btn-primary btn-sm">🩺 Book a Doctor</a>
+        </div>
+    </div>
+    <div class="chat-input-area">
+        <input type="text" id="input" placeholder="Type your message..." autocomplete="off" autofocus>
+        <button id="send-btn" onclick="send()">Send</button>
+    </div>
+    <div class="chat-footer">
+        <span>🤖 Powered by <b>Skeey TECH</b> | <a href="http://localhost/skeey_hc/patient/schedule.php" style="color:#0074d9;">Book a Doctor</a></span>
+    </div>
+</div>
+<!-- Bootstrap Icons CDN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<script>
+let step = 0;
+let ask_days = false;
+let ask_symptom = false;
+let conversation = document.getElementById("conversation");
+let input = document.getElementById("input");
+let loaderTimeout = null;
+
+function appendBot(msg, isHtml = true) {
+    removeLoader();
+    let div = document.createElement("div");
+    div.className = "bubble bot";
+    if (isHtml) div.innerHTML = msg;
+    else div.innerText = msg;
+    conversation.appendChild(div);
+    conversation.scrollTop = conversation.scrollHeight;
+}
+
+function appendUser(msg) {
+    removeLoader();
+    let div = document.createElement("div");
+    div.className = "bubble user";
+    div.innerText = msg;
+    conversation.appendChild(div);
+    conversation.scrollTop = conversation.scrollHeight;
+}
+
+function showLoader() {
+    removeLoader();
+    let div = document.createElement("div");
+    div.className = "bubble bot bot-loader-bubble";
+    div.innerHTML = '<span class="bot-loader"><span></span><span></span><span></span></span>';
+    conversation.appendChild(div);
+    conversation.scrollTop = conversation.scrollHeight;
+}
+
+function removeLoader() {
+    let loader = conversation.querySelector('.bot-loader-bubble');
+    if (loader) loader.remove();
+}
+
+function send() {
+    let val = input.value.trim();
+    if (!val) return;
+    appendUser(val);
+    input.value = "";
+    input.focus();
+    showLoader();
+    if (step === 0) {
+        fetch("/start", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({name: val})
+        }).then(r=>r.json()).then(res=>{
+            setTimeout(()=>{
+                appendBot(res.message);
+                step = 1;
+            }, 500);
+        });
+    } else if (ask_days) {
+        fetch("/next", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({input: val})
+        }).then(r=>r.json()).then(res=>{
+            setTimeout(()=>{
+                if (res.error) {
+                    appendBot(`<span style="color:#e74c3c;">${res.error}</span>`);
+                } else if (res.ask_symptom) {
+                    appendBot(`🤔 Are you experiencing <b>${res.ask_symptom.replace(/_/g, " ")}</b>? <i>(yes/no)</i>`);
+                    ask_symptom = true;
+                    ask_days = false;
+                } else if (res.disease) {
+                    showResult(res);
+                    step = 99;
+                }
+            }, 500);
+        });
+    } else if (ask_symptom) {
+        fetch("/next", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({input: val})
+        }).then(r=>r.json()).then(res=>{
+            setTimeout(()=>{
+                if (res.ask_symptom) {
+                    appendBot(`🤔 Are you experiencing <b>${res.ask_symptom.replace(/_/g, " ")}</b>? <i>(yes/no)</i>`);
+                } else if (res.disease) {
+                    showResult(res);
+                    step = 99;
+                }
+            }, 500);
+        });
+    } else if (step === 1) {
+        fetch("/next", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({input: val})
+        }).then(r=>r.json()).then(res=>{
+            setTimeout(()=>{
+                if (res.error) {
+                    appendBot(`<span style="color:#e74c3c;">${res.error}</span>`);
+                } else if (res.ask_days) {
+                    appendBot("⏳ Okay. From how many days?");
+                    ask_days = true;
+                }
+            }, 500);
+        });
+    }
+}
+
+function showResult(res) {
+    appendBot(`<b>🩺 You may have:</b> <span style="color:#0074d9">${res.disease.replace(/_/g, " ")}</span>`);
+    if (res.description) appendBot(`<b>Description:</b> ${res.description}`);
+    if (res.precautions && res.precautions.length) {
+        let list = res.precautions.map((p,i)=>`<li>${p}</li>`).join('');
+        appendBot(`<b>Take following measures:</b><ul style="margin:8px 0 0 18px;">${list}</ul>`);
+    }
+    if (res.advice) appendBot(`<b>Advice:</b> ${res.advice}`);
+    // Add quick actions after result
+    let qa = document.createElement('div');
+    qa.className = 'quick-actions';
+    qa.innerHTML = `
+        <a href="http://localhost/skeey_hc/patient/schedule.php" class="btn btn-primary btn-sm">🩺 Book a Doctor</a>
+        <a href="http://localhost/skeey_hc/patient/index.php" class="btn btn-outline-primary btn-sm">🏠 Back to Home</a>
+        <button class="btn btn-outline-secondary btn-sm" onclick="location.reload()">🔄 New Chat</button>
+    `;
+    conversation.appendChild(qa);
+    conversation.scrollTop = conversation.scrollHeight;
+}
+
+input.addEventListener("keydown", function(e){
+    if (e.key === "Enter") send();
+});
+</script>
+</body>
+</html>

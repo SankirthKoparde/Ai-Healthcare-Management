@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Healthcare Chatbot</title>
+</head>
+<body>
+    <h2>Healthcare Chatbot</h2>
+    <form id="chat-form">
+        <label>Enter your symptom:</label>
+        <input type="text" id="symptom" required>
+        <label>For how many days?</label>
+        <input type="number" id="days" value="1" min="1" required>
+        <button type="submit">Submit</button>
+    </form>
+    <div id="response"></div>
+    <script>
+        document.getElementById('chat-form').onsubmit = async function(e) {
+            e.preventDefault();
+            const symptom = document.getElementById('symptom').value;
+            const days = document.getElementById('days').value;
+            const res = await fetch('/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({symptom, days})
+            });
+            const data = await res.json();
+            let html = '';
+            if (data.error) {
+                html = `<p style="color:red">${data.error}</p>`;
+            } else {
+                html = `<p><b>Disease:</b> ${data.disease}</p>
+                        <p><b>Description:</b> ${data.description}</p>
+                        <p><b>Precautions:</b></p>
+                        <ul>${data.precautions.map(p => `<li>${p}</li>`).join('')}</ul>`;
+            }
+            document.getElementById('response').innerHTML = html;
+        }
+    </script>
+</body>
+</html>
